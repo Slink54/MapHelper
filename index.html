@@ -339,6 +339,64 @@
         .dark-theme .leaflet-routing-section{
             filter: invert(100%) hue-rotate(-310deg);
         }
+
+        .custom-alert {
+            display: none;
+            position: fixed;
+            top: 20px;
+            opacity: 0.9;
+            width: 100%;
+            background-color: transparent;
+            z-index: 1000;
+            justify-content: center;
+        }
+
+        .custom-alert-content {
+            background-color: rgb(213, 23, 12);
+            color: whitesmoke;
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+            font-size: 14px;
+            font-weight: 300;
+            padding: 25px;
+            border-radius: 30px;
+            max-width: 300px;
+            width: 90%;
+            text-align: center;
+            user-select: none;
+            animation: 
+                slideDown 0.3s ease-out,
+                colorChange 5s linear forwards,
+                fadeOut 5s linear forwards;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes colorChange {
+            0% {
+                background-position: 100% 0;
+            }
+            100% {
+                background-position: 0% 0;
+            }
+        }
+
+        @keyframes fadeOut {
+            0% {
+                opacity: 1.0;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -596,6 +654,24 @@
         // Добавляем обработчик события перемещения мыши
         myMap.on('mousemove', updateCoordinates);
 
+        // Функция для показа кастомного alert
+        function showAlert(message) {
+            const customAlert = document.createElement('div');
+            customAlert.className = 'custom-alert';
+            customAlert.style.display = 'flex';
+            
+            const alertContent = document.createElement('div');
+            alertContent.className = 'custom-alert-content';
+            alertContent.textContent = message;
+            
+            customAlert.appendChild(alertContent);
+            document.body.appendChild(customAlert);
+            
+            setTimeout(() => {
+                    customAlert.remove();
+            }, 5000);
+        }
+
         // Основные переменные
         let routingControl;
         let currentMode = 'car';
@@ -696,7 +772,7 @@
                 
                 // Обновляем маршрут и форму
                 updateRoute();
-                updateAddressForm(); // Эта функция теперь сама позаботится о правильном обновлении Input'ов
+                updateAddressForm();
                 updateRoutePanelPosition();
                 updateMarkersNumbering();
             });
@@ -791,7 +867,7 @@
         // Обработчик двойного клика для добавления точек
         myMap.on('dblclick', async function(e) {
             if (waypoints.length >= 5) {
-                alert("Максимум 5 точек маршрута");
+                showAlert("Максимум 5 точек маршрута");
                 return;
             }
 
@@ -1097,7 +1173,7 @@
             const existingInputs = addressForm.querySelectorAll('input[type="text"]');
             
             if (existingInputs.length >= 5) {
-                alert("Максимум 5 точек в маршруте");
+                showAlert("Максимум 5 точек в маршруте");
                 return;
             }
             
@@ -1155,7 +1231,7 @@
             
             // 2. Если пустых input'ов нет - удаляем последнюю промежуточную точку
             if (waypoints.length <= 2) {
-                alert("Нет промежуточных точек для удаления");
+                showAlert("Нет промежуточных точек для удаления");
                 return;
             }
             
@@ -1203,7 +1279,7 @@
             const addresses = Array.from(inputs).map(input => input.value);
             
             if (addresses.some(addr => !addr)) {
-                alert("Пожалуйста, заполните все адресные поля");
+                showAlert("Пожалуйста, заполните все адресные поля");
                 return;
             }
 
@@ -1244,7 +1320,7 @@
                 // Строим маршрут
                 updateRoute();
             } catch (error) {
-                alert(error.message);
+                showAlert(error.message);
             }
         }
 
