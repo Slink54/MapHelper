@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Карта Leaflet</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-measure@3.1.0/dist/leaflet-measure.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <link rel="stylesheet" href="leaflet-locatecontrol-gh-pages\leaflet-locatecontrol-gh-pages\dist\L.Control.Locate.min.css">
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { width: 100%; height: 100vh; }
+        /* Основные стили для панели */
+        .leaflet-routing-container {
+            width: 300px !important;
+            max-height: 40vh !important;
+            overflow-y: auto !important;
+            font-size: 12px !important;
+            padding: 5px !important;
+            top: 210px;
+            user-select: none;
+        }
+
+        #addressForm {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: rgba(39, 37, 37, 0.8); /* Фон формы */
+            max-width: 280px;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.3); /* Тень формы */
+        }
+        #addressForm input {
+            width: 260px; /* Ширина полей ввода */
+            padding: 10px; /* Отступ внутри полей ввода */
+            margin-bottom: 10px; /* Отступ между полями ввода */
+            border: 1px solid #ccc; /* Цвет рамки */
+            border-radius: 5px; /* Скругленные углы */
+            background-color: #f9f9f9; /* Цвет фона для полей ввода */
+            font-size: 14px; /* Размер шрифта */
+        }
+        #addressForm button {
+            padding: 10px 0px; /* Отступ внутри кнопки */
+            width: 150px;
+            height: 40px;
+            background-color: #007bff; /* Цвет фона кнопки */
+            color: white; /* Цвет текста на кнопке */
+            border: none; /* Без рамки */
+            border-radius: 5px; /* Скругленные углы */
+            cursor: pointer; /* Указатель при наведении */
+            font-family: Arial, Helvetica, sans-serif;
+            transitions: background-color 0.3s; /* Плавный переход цвета */
+        }
+        #addressForm button:hover {
+            background-color: #0056b3; /* Цвет фона кнопки при наведении */
+        }
+
+        #addressForm routebutton {
+            padding: 10px 15px; /* Отступ внутри кнопки */
+            background-color: #29323b; /* Цвет фона кнопки */
+            color: white; /* Цвет текста на кнопке */
+            border: none; /* Без рамки */
+            border-radius: 5px; /* Скругленные углы */
+            cursor: pointer; /* Указатель при наведении */
+            user-select: none;
+        }
+
+        #car-route img {
+            vertical-align: middle; /* Выравнивание по вертикали */
+        }
+
+        #foot-route img {
+            vertical-align: middle;
+            margin-bottom: 5px;
+        }
+
+        #addressForm routebutton:hover {
+            background-color: #2e455c; /* Цвет фона кнопки */
+        }
+
+        #addressForm addpointbutton {
+            padding: 10px 15px; /* Отступ внутри кнопки */
+            background-color: #29323b; /* Цвет фона кнопки */
+            color: white; /* Цвет текста на кнопке */
+            border: none; /* Без рамки */
+            border-radius: 5px; /* Скругленные углы */
+            cursor: pointer; /* Указатель при наведении */
+            user-select: none;
+        }
+
+        #addbutton img {
+            vertical-align: middle;
+            margin-bottom: 5px;
+        }
+
+        #addressForm addpointbutton:hover {
+            background-color: #2e455c; /* Цвет фона кнопки при наведении */
+        }
+
+        #addressForm delpointbutton {
+            padding: 10px 17px; /* Отступ внутри кнопки */
+            background-color: #29323b; /* Цвет фона кнопки */
+            color: white; /* Цвет текста на кнопке */
+            border: none; /* Без рамки */
+            border-radius: 5px; /* Скругленные углы */
+            cursor: pointer; /* Указатель при наведении */
+            user-select: none;
+        }
+
+        #delbutton img {
+            vertical-align: middle;
+            margin-bottom: 5px;
+        }
+
+        #addressForm delpointbutton:hover {
+            background-color: #2e455c; /* Цвет фона кнопки при наведении */
+        }
+
+        #addressForm deletebutton {
+            padding: 12px 18px; /* Отступ внутри кнопки */
+            background-color: #ff1500; /* Цвет фона кнопки */
+            color: white; /* Цвет текста на кнопке */
+            border: none; /* Без рамки */
+            border-radius: 5px; /* Скругленные углы */
+            cursor: pointer; /* Указатель при наведении */
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: small;
+            user-select: none;
+        }
+        #addressForm deletebutton:hover {
+            background-color: #b30000; /* Цвет фона кнопки при наведении */
+        }
+
+        #suggestions {
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            background-color: white;
+            position: absolute;
+            z-index: 1000;
+        }
+        #suggestions li {
+            padding: 8px;
+            cursor: pointer;
+        }
+        #suggestions li:hover {
+            background-color: #eee;
+        }#suggestions {
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            background-color: white;
+            position: absolute;
+            z-index: 1000;
+        }
+        #suggestions li {
+            padding: 8px;
+            cursor: pointer;
+        }
+        #suggestions li:hover {
+            background-color: #eee;
+        }
+
+        .leaflet-control-scale {
+            font-size: 20px; /* Увеличьте размер шрифта по вашему усмотрению */
+            padding: 5px;    /* Увеличьте отступы */
+            user-select: none; /* Запрещает выделение текста */
+        }
+
+        .leaflet-control-scale-line {
+            height: 25px;    /* Увеличьте высоту линейки */
+        }
+
+        .leaflet-control-locate {
+            width: 43px;
+            height: 43px;
+        }
+
+        /* Кликабельная область */
+        .leaflet-control-locate a {
+            width: 43px !important;
+            height: 43px !important;
+            display: flex !important;          /* Включаем flex-раскладку */
+            align-items: center !important;    /* Вертикальное выравнивание */
+            justify-content: center !important;/* Горизонтальное выравнивание */
+        }
+
+        /* Иконка локации */
+        .leaflet-control-locate a .leaflet-control-locate-location-arrow {
+            width: 23px !important;
+            height: 23px !important;
+            margin: 0 !important;              /* Убираем стандартные отступы */
+            background-size: 23px 23px !important;
+            background-position: center !important;
+        }
+
+        /* Спиннер загрузки */
+        .leaflet-control-locate.requesting a .leaflet-control-locate-location-arrow {
+            background-size: 23px 23px !important;
+            margin: 0 !important;
+        }
+
+        .leaflet-retina .leaflet-control-measure .leaflet-control-measure-toggle,
+        .leaflet-retina .leaflet-control-measure .leaflet-control-measure-toggle:hover,
+        .leaflet-control-measure .leaflet-control-measure-toggle,
+        .leaflet-control-measure .leaflet-control-measure-toggle:hover {
+            display: block;
+            width: 43px !important;
+            height: 43px !important;
+            background-size: 25px 25px !important;
+        }
+
+        .leaflet-retina .leaflet-measure-resultpopup a.zoomto,
+        .leaflet-retina .leaflet-measure-resultpopup a.deletemarkup,
+        .leaflet-measure-resultpopup a.deletemarkup,
+        .leaflet-measure-resultpopup a.zoomto, .leaflet-measure-resultpopup a.deletemarkup {
+            font-size: 0.8em;
+        }
+
+        .toggleButton {
+            background-color: white;
+            border: 2px solid rgba(58, 60, 63, 0.144);
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 5px;
+            user-select: none; /* Запрещает выделение текста */
+        }
+
+        #coordinates {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(39, 37, 37, 0.8);
+            padding: 5px;
+            border-radius: 5px;
+            z-index: 1000;  /* Чтобы окно было сверху карты */
+            font-family: Arial, sans-serif;
+            color: whitesmoke;
+        }
+
+        #weatherButton {
+            background-color: white;
+            border: 2px solid rgba(58, 60, 63, 0.144);
+            border-radius: 10px;
+            width: 45px; /* Ширина кнопки */
+            height: 45px; /* Высота кнопки */
+            display: flex;
+            flex-direction: column; /* Строки в вертикальной ориентации */
+            justify-content: center; /* Центрируем содержимое вертикально */
+            position: relative; /* Позиционирование для картинки */
+            transition: transform 0.2s; /* Плавный переход при увеличении */
+            user-select: none; /* Запрещает выделение текста */
+        }
+
+        #weatherButton:hover {
+            width: 100px;
+            height: 80px;
+        }
+
+        #temperature {
+            font-size: 12px; /* Размер шрифта для температуры */
+            display: flex; /* Отображаем температуру */
+            justify-content: flex-start; /* Элементы расположены сверху */
+            align-self: center; /* Центрируем текст */
+            margin-top: -15px;
+        }
+
+        #weatherIcon {
+            display: flex; /* Скрываем иконку по умолчанию */
+            position: absolute; /* Позиционируем над кнопкой */
+            top: 10px; /* Положение над кнопкой */
+            left: 50%;
+            transform: translateX(-50%); /* Центрируем иконку */
+            width: 30px; /* Ширина иконки */
+            height: 30px; /* Высота иконки */
+            margin: 0;
+            align-self: center;
+            margin-top: 5px;
+        }
+
+        #windSpeed {
+            display: none; /* Скрываем скорость ветра по умолчанию */
+            margin-top: 5px; /* Отступ сверху */
+            font-size: 12px; /* Размер шрифта */
+        }
+
+        #humidity {
+            display: none; /* Скрываем скорость ветра по умолчанию */
+            margin-top: 5px; /* Отступ сверху */
+            font-size: 12px; /* Размер шрифта */
+        }
+
+        #weatherButton:hover #temperature {
+            margin-right: 30px;
+            margin-top: 0px;
+        }
+
+        #weatherButton:hover #weatherIcon {
+            display: block; /* Показываем иконку при наведении */
+            top: -5px;
+            margin-left: 25px; /* Отступ между температурой и иконкой */
+        }
+
+        #weatherButton:hover #windSpeed {
+            display: block; /* Показываем скорость ветра при наведении */
+        }
+
+        #weatherButton:hover #humidity {
+            display: block; /* Показываем иконку при наведении */
+        }
+
+        .dark-theme {
+            filter: invert(100%) hue-rotate(310deg);
+        }
+
+        .dark-theme #weatherIcon {
+            filter: invert(100%) hue-rotate(-310deg) brightness(100%) contrast(100%) sepia(0%) drop-shadow(0 0 0px rgba(0, 0, 0, 0));
+        }
+
+        /* Исключаем спутниковые тайлы из фильтрации */
+        .dark-theme .satellite {
+            filter: invert(100%) hue-rotate(-310deg);
+        }
+
+        .dark-theme .delete-btn {
+            filter: invert(100%) hue-rotate(-310deg);
+        }
+
+        .dark-theme .leaflet-routing-section{
+            filter: invert(100%) hue-rotate(-310deg);
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="coordinates">Широта: 0, Долгота: 0</div>
+
+    <div id="addressForm">
+        <input type="text" id="startAddress" placeholder="Откуда">
+        <input type="text" id="endAddress" placeholder="Куда">
+        
+        <!-- Первая строка - кнопки типа маршрута -->
+        <div class="route-buttons">
+            <routebutton id="car-route"><img src="images/car.svg" width="30" height="30"></routebutton>
+            <routebutton id="foot-route"><img src="images/pedestrian.png" width="30" height="25"></routebutton>
+            <button id="calculateRouteButton">Построить маршрут</button>
+        </div>
+        
+        <!-- Вторая строка - кнопки управления -->
+        <div class="control-buttons" style="margin-top: 10px;">
+            <addpointbutton id="addbutton"><img src="images/plus.svg" width="30" height="30"></addpointbutton>
+            <delpointbutton id="delbutton"><img src="images/minus.png" width="25" height="30"></delpointbutton>
+            <deletebutton id="clear-route">Очистить маршрут</deletebutton>
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/leaflet-measure@3.1.0/dist/leaflet-measure.ru.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script src="leaflet-locatecontrol-gh-pages\leaflet-locatecontrol-gh-pages\dist\L.Control.Locate.min.js"></script>
+    <script src="lrm-graphhopper-1.2.0.js"></script>
+    <script>
+        var myMap = L.map('map', {
+            center: [55.751574, 37.573856],
+            zoom: 10,
+            // minZoom: 10,
+            zoomControl: false  // Правильно отключаем контролы зума
+        });
+
+        myMap.doubleClickZoom.disable();
+
+        // Настройка масштабной линейки
+        L.control.scale({
+            position: 'topright',  // Позиция линейки
+            metric: true,         // Показывать метрические единицы
+            imperial: false,      // Не показывать имперские единицы
+            minWidth: 100,       // Максимальная ширина линейки
+            updateWhenIdle: true  // Обновлять только когда карта не перемещается
+        }).addTo(myMap);
+
+        // Определение слоев
+        var streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 20,
+            attribution: '© OpenStreetMap contributors, СК: WGS 84'
+        }).addTo(myMap);
+
+        var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 20,
+            attribution: '@ESRI, СК: WGS 84',
+            className: 'satellite'
+        });
+
+        var Monochrome = L.tileLayer('https://api.maptiler.com/maps/toner-v2/{z}/{x}/{y}.png?key=3jS5cnaKbNkdtglZFJUG', {
+            maxZoom: 20,
+            attribution: '© MapTiler © OpenStreetMap contributors'
+        });
+
+        var eng = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 20,
+            attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>, СК: WGS 84'
+        });
+
+        // Создание панели с кнопками для переключения слоев
+        var baseMaps = {
+            "Схема": streetLayer,
+            "Спутник": satelliteLayer,
+            "Монохром": Monochrome,
+            "CARTO": eng
+        };
+
+        // Добавление панели управления слоями
+        L.control.layers(baseMaps).addTo(myMap);
+
+        // Слушаем событие переключения слоев
+        myMap.on('baselayerchange', function(e) {
+            // Проверяем, установлен ли слой "Схема" и зум равен 20
+            if (e.name === "Спутник" || e.name === "CARTO") {
+                if (myMap.hasLayer(streetLayer) && myMap.getZoom() === 20) {
+                    myMap.setZoom(19); // Устанавливаем зум на 19
+                }
+                myMap.setMaxZoom(19); // Устанавливаем максимальный зум на 19
+            }
+            if (e.name === "Схема") {
+                if (myMap.hasLayer(streetLayer) && myMap.getZoom() === 19) {
+                    myMap.setZoom(20);
+                }
+                myMap.setMaxZoom(20);
+            }
+        });
+
+        var measureControl = new L.Control.Measure({
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares',
+            position: 'topright',
+            activeColor: '#000000',
+            completedColor: '#012345',
+            captureZIndex: 1000
+        });
+        measureControl.addTo(myMap);
+
+        // По умолчанию показываем слой схемы
+        streetLayer.addTo(myMap);
+
+        L.control.locate({
+            position: 'topright',
+            flyTo: true,
+            strings: {
+                title: 'Моё местоположение',
+                popup: 'Вы находитесь в радиусе {distance} метров'
+            }
+        }).addTo(myMap);
+
+        // Устанавливаем темную тему по умолчанию
+        document.getElementById('map').classList.add('dark-theme');
+
+        var isDarkTheme = true; // Темная тема активна по умолчанию
+
+        // Создание пользовательского элемента управления для кнопки смены темы
+        var themeToggleControl = L.Control.extend({
+            onAdd: function(map) {
+                var button = L.DomUtil.create('button', 'toggleButton');
+                button.style.display = 'flex'; // Используем Flexbox для выравнивания
+                button.style.border = '2px solid rgba(128, 128, 128, 0.5)'; // Добавляем границу
+                button.style.cursor = 'pointer'; // Курсор-указатель
+                button.innerHTML = '<img src="https://play-lh.googleusercontent.com/eEnKgMHKjy7VoJD9nEaw2XqHFxTU_KUF-Ku5vKx1qCPyUpLqStZnhecur4n570XP8wo" style="width: 24px; height: 24px;">'; // Изображение кнопки
+            
+                button.onclick = function() {
+                    var mapContainer = document.getElementById('map');
+                    var imgElement = button.querySelector('img'); // Получаем элемент изображения
+                    // Переключение между светлой и темной темами
+                    if (mapContainer.classList.contains('dark-theme')) {
+                        mapContainer.classList.remove('dark-theme');
+                        mapContainer.classList.add('light-theme');
+                        // Меняем изображение на светлой теме
+                        imgElement.src = "https://avatars.mds.yandex.net/i?id=45c165f5c05677c310cf2278556a70440ebf22b1-10695517-images-thumbs&ref=rim&n=33&w=250&h=250"; // Изображение для светлой темы
+                    } else {
+                        mapContainer.classList.remove('light-theme');
+                        mapContainer.classList.add('dark-theme');
+                        // Меняем изображение на темной теме
+                        imgElement.src = "https://play-lh.googleusercontent.com/eEnKgMHKjy7VoJD9nEaw2XqHFxTU_KUF-Ku5vKx1qCPyUpLqStZnhecur4n570XP8wo";
+                    }
+                };
+                return button;
+            }
+        });
+
+        // Добавление кнопки смены темы на карту
+        myMap.addControl(new themeToggleControl({ position: 'topright' }));
+
+        // Определяем координаты для границ квадрата
+        // var southWest = L.latLng(55.07050, 36.55701); // Юго-западный угол
+        // var northEast = L.latLng(56.05304, 38.67737); // Северо-восточный угол
+        // var bounds = L.latLngBounds(southWest, northEast); // Создаем границы
+
+        // Загрузка GeoJSON
+        fetch('Boundary.geojson')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Ошибка сети: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Создаем GeoJSON слой
+                var geoJsonLayer = L.geoJSON(data, {
+                    style: function (feature) {
+                        return {
+                            color: "#463A52",
+                            weight: 2
+                        };
+                    }
+                }).addTo(myMap); // Добавляем слой на карту
+
+                // Центрируем карту на загруженном полигоне
+                myMap.fitBounds(geoJsonLayer.getBounds()); // Центрируем на полигоне
+
+                // Устанавливаем максимальные границы
+                myMap.setMaxBounds(bounds); // Устанавливаем границы по вашему квадрату
+            })
+            .catch(error => console.error('Ошибка загрузки GeoJSON:', error));
+
+        // Функция для получения погоды
+        async function getWeather(map) {
+            const url = `https://api.weatherapi.com/v1/current.json?key=80d3eb86e8ce48f1bf9230806251503&q=Moscow&aqi=no`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                // Проверяем, существует ли элемент кнопки
+                let weatherButton = document.getElementById('weatherButton');
+                
+                if (!weatherButton) {
+                    // Создаем пользовательский элемент управления для кнопки погоды
+                    var weatherControl = L.Control.extend({
+                        onAdd: function(map) {
+                            var button = L.DomUtil.create('div', 'leaflet-bar weather-btn'); // Создаем контейнер для кнопки
+                            button.id = 'weatherButton'; // Присваиваем ID кнопке
+
+                            button.innerHTML = `
+                                <span id="temperature">${data.current.temp_c} °C</span>
+                                <img id="weatherIcon" src="https:${data.current.condition.icon}" alt="Weather Icon"/>
+                                <span id="windSpeed">Ветер: ${(data.current.wind_kph/ 3.6).toFixed(1)} м/с</span>
+                                <span id="humidity">Влажность: ${data.current.humidity}%</span>`;
+
+                            button.style.cursor = 'pointer';
+                            button.onclick = function() {
+                                getWeather(map); // Обновляем погоду при нажатии на кнопку
+                            };
+
+                            return button;
+                        },
+
+                        onRemove: function(map) {
+                            // Код для выполнения, когда элемент управления удален (при необходимости)
+                        }
+                    });
+
+                    // Добавление кнопки погоды на карту
+                    map.addControl(new weatherControl({ position: 'topright' }));
+                } else {
+                    // Обновляем информацию на существующей кнопке
+                    document.getElementById('temperature').textContent = `${data.current.temp_c} °C`;
+                    document.getElementById('weatherIcon').src = `https:${data.current.condition.icon}`;
+                    document.getElementById('windSpeed').textContent = `Ветер: ${(data.current.wind_kph/ 3.6).toFixed(1)} м/с`;
+                    document.getElementById('humidity').textContent = `Влажность: ${data.cuurrent.humidity}%`;
+                }
+            } catch (error) {
+                console.error('Ошибка при получении погоды:', error);
+            }
+        }
+
+        // Вызываем функцию получения погоды
+        getWeather(myMap);
+
+        // Функция для обновления координат
+        function updateCoordinates(e) {
+            var lat = e.latlng.lat.toFixed(5); // Получаем широту
+            var lng = e.latlng.lng.toFixed(5); // Получаем долготу
+            document.getElementById('coordinates').innerHTML = `Широта: ${lat}, Долгота: ${lng}`; // Обновляем окно
+        }
+
+        // Добавляем обработчик события перемещения мыши
+        myMap.on('mousemove', updateCoordinates);
+
+        // Основные переменные
+        let routingControl;
+        let currentMode = 'car';
+        const waypoints = [];
+        const mapMarkers = []; // Для хранения маркеров из поиска по адресу
+
+        // Функция для создания маркера
+        function createMarker(i, waypoint, isFromSearch = false) {
+            const marker = L.marker(waypoint.latLng || waypoint, {
+                draggable: true,
+                icon: L.divIcon({
+                    className: 'waypoint-marker',
+                    html: `<div>${i + 1}</div>`,
+                    iconSize: [24, 24]
+                })
+            });
+            
+            // Добавляем popup
+            marker.bindPopup(createPopupContent(i, waypoint));
+            
+            // Обработчики событий
+            marker.on('dragstart', function() {
+                this.closePopup();
+            });
+            
+            marker.on('dragend', async function(e) {
+                const newLatLng = this.getLatLng();
+                waypoints[i].latLng = newLatLng;
+                
+                // Получаем новый адрес для новых координат
+                try {
+                    const streetAddress = await getSimpleAddress(newLatLng);
+                    waypoints[i].address = streetAddress || `${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
+                    this.setPopupContent(createPopupContent(i, waypoints[i]));
+                    
+                    // Обновляем соответствующий input в форме
+                    updateAddressForm();
+                } catch (error) {
+                    console.error("Ошибка получения адреса:", error);
+                }
+                
+                if (routingControl) {
+                    routingControl.spliceWaypoints(i, 1, newLatLng);
+                }
+            });
+            
+            if (isFromSearch) {
+                mapMarkers.push(marker);
+            }
+            
+            return marker;
+        }
+
+        // Создание содержимого popup
+        function createPopupContent(index, waypoint) {
+            const container = L.DomUtil.create('div');
+            const location = waypoint.latLng || waypoint;
+            
+            container.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="margin-bottom: 4px; font-size: 12px;">
+                        <b>${waypoint.address || `Точка ${index + 1}`}</b><br>
+                        Широта: ${location.lat.toFixed(5)}<br>
+                        Долгота: ${location.lng.toFixed(5)}
+                    </div>
+                    <button class="delete-btn" 
+                            style="padding: 6px 12px; 
+                                background: #EB1E1E; 
+                                color: white; 
+                                border: 2px solid black; 
+                                border-radius: 5px; 
+                                cursor: pointer;
+                                font-size: 14px;">
+                        Удалить точку
+                    </button>
+                </div>
+            `;
+            
+            L.DomEvent.on(container.querySelector('.delete-btn'), 'click', (e) => {
+                L.DomEvent.stop(e);
+                
+                // Удаляем точку из массива
+                waypoints.splice(index, 1);
+                
+                // Удаляем маркер с карты
+                if (mapMarkers[index]) {
+                    myMap.removeLayer(mapMarkers[index]);
+                    mapMarkers.splice(index, 1);
+                }
+                
+                // Полная очистка формы при удалении последней точки
+                if (waypoints.length === 0) {
+                    document.getElementById('startAddress').value = '';
+                    document.getElementById('endAddress').value = '';
+                    const waypointInputs = document.querySelectorAll('.waypoint-input');
+                    waypointInputs.forEach(input => input.remove());
+                }
+                
+                // Обновляем маршрут и форму
+                updateRoute();
+                updateAddressForm(); // Эта функция теперь сама позаботится о правильном обновлении Input'ов
+                updateRoutePanelPosition();
+                updateMarkersNumbering();
+            });
+            
+            return container;
+        }
+
+        // Функция обновления маршрута
+        function updateRoute() {
+            if (waypoints.length >= 1) {
+                createRouter(currentMode);
+            } else if (routingControl) {
+                myMap.removeControl(routingControl);
+                routingControl = null;
+            }
+            updateRoutePanelPosition();
+        }
+
+        // Функция создания маршрутизатора
+        function createRouter(mode) {
+            if (routingControl) {
+                myMap.removeControl(routingControl);
+            }
+
+            const showAlternatives = waypoints.length === 2;
+
+            const router = mode === 'car' 
+                ? L.Routing.osrmv1({ 
+                    serviceUrl: 'https://router.project-osrm.org/route/v1',
+                    language: 'ru'
+                })
+                : L.Routing.graphHopper('22de7643-d2a2-42c2-8754-5f8ee5299d1f', {
+                    urlParameters: {
+                        vehicle: 'foot',
+                        weighting: 'fastest',
+                        locale: 'ru',
+                        // Добавляем параметры альтернативных маршрутов только для двух точек
+                        ...(showAlternatives && {
+                            algorithm: 'alternative_route',
+                            'alternative_route.max_paths': 3,
+                            'alternative_route.max_weight_factor': 1.2,
+                            'alternative_route.max_share_factor': 0.7
+                        }),
+                        optimize: 'false'
+                    }
+                });
+
+            routingControl = L.Routing.control({
+                waypoints: waypoints.map(wp => wp.latLng),
+                router: router,
+                plan: L.Routing.plan(waypoints.map(wp => wp.latLng), {
+                    createMarker: function(i, wp) { 
+                        return createMarker(i, waypoints[i]); 
+                    },
+                    routeWhileDragging: true
+                }),
+                showAlternatives: showAlternatives,
+                routeWhileDragging: true,
+                addWaypoints: false,
+                position: 'topleft',
+                summaryTemplate: `
+                    <div class="leaflet-routing-section" style="color: #D89024; font-size: 14px; font-family: Fantasy; font-weight: 300">
+                        <span>Расстояние: {distance}</span><br/>
+                        <span>Время: {time}</span>
+                    </div> `,
+                language: 'ru',
+                lineOptions: {
+                    styles: mode === 'car' 
+                        ? [
+                            { color: 'black', opacity: 1, weight: 9 },
+                            { color: '#611297', opacity: 1, weight: 7 }
+                        ]
+                        : [
+                            { color: 'black', opacity: 1, weight: 5 },
+                            { color: '#CBDA54', opacity: 1, weight: 5, dashArray: '10, 7' }
+                        ]
+                },
+                altLineOptions: {
+                    styles: mode === 'car'
+                        ? [
+                            { color: 'black', opacity: 0.7, weight: 7 },
+                            { color: '#9FA3A8', opacity: 1, weight: 5 }
+                        ]
+                        : [
+                            { color: 'black', opacity: 0.7, weight: 4 },
+                            { color: '#9FA3A8', opacity: 1, weight: 4, dashArray: '7, 5' }
+                        ]
+                }
+            }).addTo(myMap);
+        }
+
+        // Обработчик двойного клика для добавления точек
+        myMap.on('dblclick', async function(e) {
+            if (waypoints.length >= 5) {
+                alert("Максимум 5 точек маршрута");
+                return;
+            }
+
+            try {
+                // Получаем упрощенный адрес
+                const streetAddress = await getSimpleAddress(e.latlng);
+                
+                // Проверяем, есть ли пустые Input'ы в форме
+                const inputs = document.querySelectorAll('#addressForm input[type="text"]');
+                let emptyInputIndex = -1;
+                
+                // Ищем первый пустой Input
+                for (let i = 0; i < inputs.length; i++) {
+                    if (!inputs[i].value.trim()) {
+                        emptyInputIndex = i;
+                        break;
+                    }
+                }
+                
+                // Если нашли пустой Input, добавляем точку в соответствующую позицию
+                if (emptyInputIndex !== -1) {
+                    const newWaypoint = {
+                        latLng: e.latlng,
+                        address: streetAddress || `${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`
+                    };
+                    
+                    // Вставляем точку в нужную позицию
+                    if (emptyInputIndex === 0) {
+                        waypoints.unshift(newWaypoint);
+                    } else if (emptyInputIndex === inputs.length - 1) {
+                        waypoints.push(newWaypoint);
+                    } else {
+                        waypoints.splice(emptyInputIndex, 0, newWaypoint);
+                    }
+                    
+                    // Создаем маркер
+                    const marker = createMarker(emptyInputIndex, newWaypoint);
+                    marker.bindPopup(`<b>${newWaypoint.address}</b>`).openPopup();
+                } else {
+                    // Если все Input'ы заполнены, добавляем в конец
+                    const newWaypoint = {
+                        latLng: e.latlng,
+                        address: streetAddress || `${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`
+                    };
+                    waypoints.push(newWaypoint);
+                    
+                    // Создаем маркер
+                    const marker = createMarker(waypoints.length - 1, newWaypoint);
+                    marker.bindPopup(`<b>${newWaypoint.address}</b>`).openPopup();
+                }
+                
+                // Обновляем форму (сохраняя стандартные input'ы)
+                updateAddressForm();
+                
+                // Обновляем маршрут
+                updateRoute();
+            } catch (error) {
+                console.error("Геокодирование не удалось, но точка добавлена:", error);
+                
+                // Добавляем точку с координатами вместо "Точка N"
+                const newWaypoint = {
+                    latLng: e.latlng,
+                    address: `${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`
+                };
+                waypoints.push(newWaypoint);
+                createMarker(waypoints.length - 1, newWaypoint);
+                updateAddressForm();
+                updateRoute();
+            }
+        });
+
+        // Функция для получения только улицы и номера дома
+        async function getSimpleAddress(latlng) {
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&addressdetails=1`
+                );
+                const data = await response.json();
+                
+                const addr = data.address || {};
+                if (addr.road) {
+                    return addr.house_number ? `${addr.road}, ${addr.house_number}` : addr.road;
+                }
+                return addr.pedestrian || addr.footway || null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Функция обновления формы с обработчиками событий
+        function updateAddressForm() {
+            const container = document.getElementById('addressForm');
+            
+            // Создаем или получаем основные input'ы
+            let startInput = document.getElementById('startAddress');
+            let endInput = document.getElementById('endAddress');
+            
+            if (!startInput) {
+                startInput = document.createElement('input');
+                startInput.id = 'startAddress';
+                startInput.placeholder = 'Откуда';
+                startInput.type = 'text';
+                container.prepend(startInput);
+            }
+            
+            if (!endInput) {
+                endInput = document.createElement('input');
+                endInput.id = 'endAddress';
+                endInput.placeholder = 'Куда';
+                endInput.type = 'text';
+                container.insertBefore(endInput, document.getElementById('calculateRouteButton'));
+            }
+            
+            // Удаляем все промежуточные input'ы
+            const waypointInputs = container.querySelectorAll('.waypoint-input');
+            waypointInputs.forEach(input => input.remove());
+            
+            // Очищаем обработчики событий перед добавлением новых
+            const newStartInput = startInput.cloneNode(true);
+            const newEndInput = endInput.cloneNode(true);
+            container.replaceChild(newStartInput, startInput);
+            container.replaceChild(newEndInput, endInput);
+            startInput = newStartInput;
+            endInput = newEndInput;
+            
+            // Обновляем значения основных точек
+            if (waypoints.length > 0) {
+                startInput.value = waypoints[0].address || '';
+            } else {
+                startInput.value = '';
+            }
+            
+            if (waypoints.length > 1) {
+                endInput.value = waypoints[waypoints.length-1].address || '';
+            } else {
+                endInput.value = '';
+            }
+            
+            // Добавляем промежуточные точки (если есть)
+            for (let i = 1; i < waypoints.length - 1; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'waypoint-input';
+                input.placeholder = `Промежуточная точка ${i}`;
+                input.value = waypoints[i].address || '';
+                
+                // Добавляем обработчик изменения для промежуточных точек
+                input.addEventListener('change', async () => {
+                    if (input.value !== waypoints[i].address) {
+                        try {
+                            const response = await fetch(
+                                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(input.value)}`
+                            );
+                            const data = await response.json();
+                            
+                            if (data.length > 0) {
+                                const newLatLng = L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
+                                waypoints[i].latLng = newLatLng;
+                                waypoints[i].address = input.value;
+                                
+                                if (mapMarkers[i]) {
+                                    mapMarkers[i].setLatLng(newLatLng);
+                                    mapMarkers[i].setPopupContent(createPopupContent(i, waypoints[i]));
+                                }
+                                
+                                updateRoute();
+                            }
+                        } catch (error) {
+                            console.error("Ошибка геокодирования:", error);
+                        }
+                    }
+                });
+                
+                container.insertBefore(input, endInput);
+            }
+            
+            // Обработчик изменения начальной точки
+            startInput.addEventListener('change', async () => {
+                if (waypoints.length > 0 && startInput.value !== waypoints[0].address) {
+                    try {
+                        const response = await fetch(
+                            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(startInput.value)}`
+                        );
+                        const data = await response.json();
+                        
+                        if (data.length > 0) {
+                            const newLatLng = L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
+                            waypoints[0].latLng = newLatLng;
+                            waypoints[0].address = startInput.value;
+                            
+                            if (mapMarkers[0]) {
+                                mapMarkers[0].setLatLng(newLatLng);
+                                mapMarkers[0].setPopupContent(createPopupContent(0, waypoints[0]));
+                            }
+                            
+                            updateRoute();
+                        }
+                    } catch (error) {
+                        console.error("Ошибка геокодирования:", error);
+                    }
+                } else if (waypoints.length === 0 && startInput.value.trim() !== '') {
+                    // Если точек нет, но введен адрес - добавляем новую точку
+                    try {
+                        const location = await geocodeAddress(startInput.value);
+                        waypoints.push({
+                            latLng: L.latLng(location.lat, location.lng),
+                            address: location.address
+                        });
+                        
+                        updateRoute();
+                        updateAddressForm();
+                    } catch (error) {
+                        console.error("Ошибка геокодирования:", error);
+                    }
+                }
+            });
+            
+            // Обработчик изменения конечной точки
+            endInput.addEventListener('change', async () => {
+                if (waypoints.length > 1 && endInput.value !== waypoints[waypoints.length-1].address) {
+                    try {
+                        const response = await fetch(
+                            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endInput.value)}`
+                        );
+                        const data = await response.json();
+                        
+                        if (data.length > 0) {
+                            const newLatLng = L.latLng(parseFloat(data[0].lat), parseFloat(data[0].lon));
+                            waypoints[waypoints.length-1].latLng = newLatLng;
+                            waypoints[waypoints.length-1].address = endInput.value;
+                            
+                            if (mapMarkers[mapMarkers.length-1]) {
+                                mapMarkers[mapMarkers.length-1].setLatLng(newLatLng);
+                                mapMarkers[mapMarkers.length-1].setPopupContent(createPopupContent(waypoints.length-1, waypoints[waypoints.length-1]));
+                            }
+                            
+                            updateRoute();
+                        }
+                    } catch (error) {
+                        console.error("Ошибка геокодирования:", error);
+                    }
+                } else if (waypoints.length === 1 && endInput.value.trim() !== '') {
+                    // Если есть только начальная точка - добавляем конечную
+                    try {
+                        const location = await geocodeAddress(endInput.value);
+                        waypoints.push({
+                            latLng: L.latLng(location.lat, location.lng),
+                            address: location.address
+                        });
+                        
+                        updateRoute();
+                        updateAddressForm();
+                    } catch (error) {
+                        console.error("Ошибка геокодирования:", error);
+                    }
+                }
+            });
+        }
+
+        // Инициализация стандартных input'ов при загрузке
+        function initAddressForm() {
+            const container = document.getElementById('addressForm');
+            if (!document.getElementById('startAddress')) {
+                const startInput = document.createElement('input');
+                startInput.id = 'startAddress';
+                startInput.placeholder = 'Откуда';
+                startInput.type = 'text';
+                container.prepend(startInput);
+            }
+            
+            if (!document.getElementById('endAddress')) {
+                const endInput = document.createElement('input');
+                endInput.id = 'endAddress';
+                endInput.placeholder = 'Куда';
+                endInput.type = 'text';
+                const calculateBtn = document.getElementById('calculateRouteButton');
+                container.insertBefore(endInput, calculateBtn);
+            }
+        }
+
+        // Вызываем инициализацию при загрузке
+        initAddressForm();
+
+        // Функция для поиска адреса через Nominatim
+        async function geocodeAddress(address) {
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.length > 0) {
+                    return {
+                        lat: parseFloat(data[0].lat),
+                        lng: parseFloat(data[0].lon),
+                        address: data[0].display_name
+                    };
+                }
+            }
+            throw new Error("Адрес не найден");
+        }
+
+        // Добавляем обработчик для кнопки "Добавить точку"
+        document.getElementById('addbutton')?.addEventListener('click', function() {
+            const addressForm = document.getElementById('addressForm');
+            const existingInputs = addressForm.querySelectorAll('input[type="text"]');
+            
+            if (existingInputs.length >= 5) {
+                alert("Максимум 5 точек в маршруте");
+                return;
+            }
+            
+            // Создаем новый input
+            const newInput = document.createElement('input');
+            newInput.type = 'text';
+            newInput.placeholder = 'Промежуточная точка ' + (existingInputs.length - 1);
+            newInput.className = 'waypoint-input';
+            
+            // Вставка перед конечной кнопкой маршрута
+            const addButton = document.getElementById('endAddress');
+            addressForm.insertBefore(newInput, addButton);
+            
+            // Обновляем плейсхолдеры для промежуточных точек
+            updateWaypointPlaceholders();
+        });
+
+        document.getElementById('delbutton').addEventListener('click', function() {
+            const waypointInputs = document.querySelectorAll('#addressForm input.waypoint-input');
+            
+            // 1. Удаление пустых input'ов (начиная с последнего)
+            let emptyInputFound = false;
+            for (let i = waypointInputs.length - 1; i >= 0; i--) {
+                if (waypointInputs[i].value.trim() === '') {
+                    // Удаляем input из DOM
+                    waypointInputs[i].remove();
+                    
+                    // Находим индекс соответствующей точки в waypoints
+                    // Все input'ы после стартового соответствуют waypoints[1..n-1]
+                    const waypointIndex = i + 1;
+                    
+                    // Проверяем, что это действительно промежуточная точка (не конечная)
+                    if (waypointIndex < waypoints.length - 1) {
+                        waypoints.splice(waypointIndex, 1);
+                        if (mapMarkers[waypointIndex]) {
+                            myMap.removeLayer(mapMarkers[waypointIndex]);
+                            mapMarkers.splice(waypointIndex, 1);
+                        }
+                    }
+                    
+                    emptyInputFound = true;
+                    break;
+                }
+            }
+            
+            if (emptyInputFound) {
+                // Обновление интерфейса
+                updateWaypointPlaceholders();
+                updateRoutePanelPosition();
+                updateRoute();
+                updateMarkersNumbering();
+                updateAddressForm();
+                return;
+            }
+            
+            // 2. Если пустых input'ов нет - удаляем последнюю промежуточную точку
+            if (waypoints.length <= 2) {
+                alert("Нет промежуточных точек для удаления");
+                return;
+            }
+            
+            // Удаляем предпоследнюю точку (последнюю промежуточную)
+            const waypointIndex = waypoints.length - 2;
+            waypoints.splice(waypointIndex, 1);
+            
+            if (mapMarkers[waypointIndex]) {
+                myMap.removeLayer(mapMarkers[waypointIndex]);
+                mapMarkers.splice(waypointIndex, 1);
+            }
+            
+            // Обновление интерфейса
+            updateRoute();
+            updateMarkersNumbering();
+            updateAddressForm();
+            updateRoutePanelPosition();
+            updateWaypointPlaceholders();
+        });
+
+        // Функция для обновления нумерации маркеров
+        function updateMarkersNumbering() {
+            mapMarkers.forEach((marker, index) => {
+                const latLng = marker.getLatLng();
+                marker.setPopupContent(createPopupContent(index, waypoints[index]));
+                marker.setIcon(L.divIcon({
+                    className: 'waypoint-marker',
+                    html: `<div>${index + 1}</div>`,
+                    iconSize: [24, 24]
+                }));
+            });
+        }
+
+        // Функция для обновления плейсхолдеров промежуточных точек
+        function updateWaypointPlaceholders() {
+            const inputs = document.querySelectorAll('#addressForm input.waypoint-input');
+            inputs.forEach((input, index) => {
+                input.placeholder = 'Промежуточная точка ' + (index + 1);
+            });
+        }
+
+        // Модифицируем функцию обработки поиска адресов
+        async function handleAddressSearch() {
+            const inputs = document.querySelectorAll('#addressForm input[type="text"]');
+            const addresses = Array.from(inputs).map(input => input.value);
+            
+            if (addresses.some(addr => !addr)) {
+                alert("Пожалуйста, заполните все адресные поля");
+                return;
+            }
+
+            try {
+                // Очищаем предыдущие точки
+                waypoints.length = 0;
+                mapMarkers.forEach(marker => myMap.removeLayer(marker));
+                mapMarkers.length = 0;
+                if (routingControl) {
+                    myMap.removeControl(routingControl);
+                    routingControl = null;
+                }
+
+                // Геокодируем все адреса
+                const locations = [];
+                for (const address of addresses) {
+                    const location = await geocodeAddress(address);
+                    locations.push(location);
+                }
+
+                // Добавляем точки маршрута
+                for (const location of locations) {
+                    waypoints.push({
+                        latLng: L.latLng(location.lat, location.lng),
+                        address: location.address
+                    });
+                }
+
+                // Создаем маркеры
+                createMarker(0, waypoints[0], true);
+                for (let i = 1; i < waypoints.length - 1; i++) {
+                    createMarker(i, waypoints[i], true);
+                }
+                if (waypoints.length > 1) {
+                    createMarker(waypoints.length - 1, waypoints[waypoints.length - 1], true);
+                }
+
+                // Строим маршрут
+                updateRoute();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        // Обработчики кнопок
+        document.getElementById('car-route').addEventListener('click', () => {
+            currentMode = 'car';
+            if (waypoints.length >= 2) createRouter('car');
+            updateRoutePanelPosition();
+        });
+
+        document.getElementById('foot-route').addEventListener('click', () => {
+            currentMode = 'foot';
+            if (waypoints.length >= 2) createRouter('foot');
+            updateRoutePanelPosition();
+        });
+
+        document.getElementById('clear-route').addEventListener('click', function() {
+            // Очищаем массивы точек и маркеров
+            waypoints.length = 0;
+            mapMarkers.forEach(marker => myMap.removeLayer(marker));
+            mapMarkers.length = 0;
+
+            let currentPanelTop = 210;
+            
+            // Удаляем контрол маршрутизации
+            if (routingControl) {
+                myMap.removeControl(routingControl);
+                routingControl = null;
+            }
+            
+            // Находим все input'ы кроме начального и конечного
+            const allInputs = document.querySelectorAll('#addressForm input[type="text"]');
+            const startInput = document.getElementById('startAddress');
+            const endInput = document.getElementById('endAddress');
+            
+            // Удаляем все промежуточные input'ы
+            allInputs.forEach(input => {
+                if (input !== startInput && input !== endInput) {
+                    input.remove();
+                }
+            });
+            
+            // Очищаем значения в основных полях
+            startInput.value = '';
+            endInput.value = '';
+        });
+
+        document.getElementById('calculateRouteButton').addEventListener('click', handleAddressSearch);
+
+        // Стиль для маркеров точек
+        const style = document.createElement('style');
+        style.textContent = `
+            .waypoint-marker {
+                background: #FFFAaF;
+                color: black;
+                border-radius: 50%;
+                text-align: center;
+                line-height: 24px;
+                border: 2px solid black;
+                z-index: 1000;
+            }
+            .delete-btn:hover {
+                background: #cc0000 !important;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Текущее значение top (начальное значение 210px)
+        let currentPanelTop = 210;
+
+        // Функция для обновления позиции панели маршрутов
+        function updateRoutePanelPosition() {
+            const routePanel = document.querySelector('.leaflet-routing-container');
+            if (!routePanel) return;
+
+            // Получаем все текстовые input'ы в адресной форме
+            const inputs = document.querySelectorAll('#addressForm input[type="text"]');
+            const inputsCount = inputs.length;
+            
+            // Рассчитываем новую позицию
+            let newTop = 210;
+            if (inputsCount >= 3) {
+                newTop = 210 + (inputsCount - 2) * 48;
+                newTop = Math.min(newTop, 354); // Максимальное значение 354px
+            }
+            
+            currentPanelTop = newTop;
+            routePanel.style.top = `${currentPanelTop}px`;
+        }
+
+        document.getElementById('addbutton').addEventListener('click', function() {
+            const routePanel = document.querySelector('.leaflet-routing-container');
+            if (!routePanel) return;
+            
+            // Автоматический перерасчет при добавлении
+            updateRoutePanelPosition();
+        });
+
+        document.getElementById('delbutton').addEventListener('click', function() {
+            const routePanel = document.querySelector('.leaflet-routing-container');
+            if (!routePanel) return;
+            
+            // Автоматический перерасчет при удалении
+            updateRoutePanelPosition();
+        });
+
+        // Инициализация при загрузке
+        window.addEventListener('DOMContentLoaded', function() {
+            updateRoutePanelPosition();
+        });
+    </script>
+</body>
+</html>
+
